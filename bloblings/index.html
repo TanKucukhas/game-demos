@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>bloblings · SDF blend-shell critters</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #cfe8f7;
+    font-family: "SF Pro Rounded", ui-rounded, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-user-select: none; user-select: none; }
+  canvas { display: block; touch-action: none; }
+  .panel { position: absolute; color: #2b3350; z-index: 5; }
+  #logo { top: 16px; left: 20px; pointer-events: none; }
+  #logo h1 { font-size: 26px; font-weight: 800; letter-spacing: 1px; color: #35406e;
+    text-shadow: 0 2px 0 rgba(255,255,255,.6); }
+  #logo p { font-size: 12px; opacity: .65; margin-top: 2px; font-weight: 600; }
+  #buttons { top: 16px; right: 16px; display: flex; gap: 8px; }
+  button { border: none; cursor: pointer; font-family: inherit; font-weight: 700;
+    border-radius: 14px; padding: 10px 14px; font-size: 14px; color: #35406e;
+    background: rgba(255,255,255,.75); backdrop-filter: blur(8px);
+    box-shadow: 0 3px 0 rgba(53,64,110,.18); transition: transform .08s, box-shadow .08s; }
+  button:hover { transform: translateY(-1px); }
+  button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(53,64,110,.18); }
+  #btn-new { background: #ffd76e; }
+  #json-card { bottom: 16px; left: 16px; max-width: 320px; max-height: 46vh; overflow: auto;
+    background: rgba(28,32,54,.82); backdrop-filter: blur(10px); border-radius: 16px;
+    padding: 14px 16px; color: #dfe6ff; display: none; }
+  #json-card h3 { font-size: 14px; margin-bottom: 6px; color: #ffd76e; }
+  #json-card pre { font: 11px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
+  #json-card .cap { font-size: 10px; opacity: .55; margin-top: 8px; }
+  #stats { bottom: 14px; right: 16px; text-align: right; font-size: 11px; font-weight: 600; white-space: pre-line;
+    color: #35406e; opacity: .75; pointer-events: none; line-height: 1.6; }
+  #info { display: none; position: absolute; inset: 0; z-index: 20;
+    background: rgba(20,24,44,.55); backdrop-filter: blur(4px); }
+  #info > div { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: min(560px, 88vw); background: #fff; border-radius: 20px; padding: 26px 28px;
+    color: #2b3350; font-size: 14px; line-height: 1.65; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  #info h2 { margin-bottom: 10px; color: #35406e; }
+  #info b { color: #b0651f; }
+  #info .x { position: absolute; top: 12px; right: 14px; background: #eef1fb; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="logo" class="panel"><h1>bloblings</h1><p>SDF blend-shell critters · one draw call each · zero animation clips</p></div>
+<div id="buttons" class="panel">
+  <button id="btn-new">✨ new blobling</button>
+  <button id="btn-sound">🔇</button>
+  <button id="btn-info">❔</button>
+</div>
+<div id="json-card" class="panel">
+  <h3 id="json-name"></h3><pre id="json-body"></pre>
+  <div class="cap">this JSON is the whole character — an LLM can write these all day</div>
+</div>
+<div id="stats" class="panel"></div>
+<div id="info"><div>
+  <button class="x" id="btn-info-x">✕</button>
+  <h2>how it works</h2>
+  <p>Every critter is plain capsule/cone meshes merged into <b>one draw call</b>. A vertex
+  shader snaps each vertex onto the <b>smooth-min SDF surface</b> of all shapes combined, so
+  overlapping parts converge onto one blended skin — the seams simply cease to exist.
+  Normals come from the SDF gradient and colors blend by SDF proximity, so lighting and
+  palette flow continuously across joints. No raymarching, no skinning: cost is per-vertex,
+  which is why it runs on phones.</p>
+  <p style="margin-top:8px">Animation is 100% procedural — reactive IK stepping for 2/4/6 legs,
+  a squash-and-stretch state machine for hoppers, hover-and-bank for flyers, and verlet-rope
+  tails and ears whose segments are SDF primitives too, so they stay seamlessly fused while
+  they flop. A character is ~15 lines of JSON.</p>
+  <p style="margin-top:8px">Click a critter to see its JSON. Click the ground to get their attention.</p>
+</div></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
