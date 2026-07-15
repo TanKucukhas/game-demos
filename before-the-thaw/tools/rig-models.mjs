@@ -40,7 +40,8 @@ async function upload() {
   const fd = new FormData();
   fd.append('key', KEY);
   fd.append('model_name', name);
-  fd.append('model_type', type);
+  if (type === 'auto') fd.append('auto_classify', 'true');
+  else fd.append('model_type', type);
   fd.append('symmetry', 'true');
   fd.append('auto_rotate', 'true');
   fd.append('can_use_for_internal_improvements', 'false');

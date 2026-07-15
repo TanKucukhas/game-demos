@@ -43,7 +43,7 @@ const MESHY_MODELS = [
   },
   {
     file: 'polar_bear_cub.glb',
-    prompt: 'polar bear cub, three months old, fluffy cream-white fur, round body, big paws, cute but realistic, standing on all fours, game-ready low poly',
+    prompt: 'polar bear cub standing in a neutral rest pose, four legs clearly separated with visible gaps between them, legs straight and vertical, slightly slim legs, compact body, head facing forward, cream-white fur, symmetrical, clean topology for auto-rigging, game-ready',
   },
   {
     file: 'ringed_seal.glb',
