@@ -14,6 +14,13 @@ export class Cub {
     this.curiosity = opts.curiosity;       // chance to wander
     this.obedience = opts.obedience;       // how reliably commands land
     this.speed = opts.speed;
+    // organic-follow personality
+    this.followDelay = opts.followDelay;   // seconds behind mother's trail
+    this.lateral = opts.lateral;           // preferred side offset from the trail
+    this.swayPhase = Math.random() * Math.PI * 2;
+    this.swayFreq = 0.6 + Math.random() * 0.7;
+    this.dawdleT = 4 + Math.random() * 7;  // countdown to a spontaneous pause
+    this.pauseT = 0;
     this.mesh = buildCub(opts.color);
     scene.add(this.mesh);
 
@@ -121,7 +128,39 @@ export class Cub {
     // movement
     let target = null, wantSpeed = 0;
     if (this.state === STATES.FOLLOW) {
-      if (distM > 3.2) { target = mother.position; wantSpeed = distM > 10 ? this.speed * 1.5 : this.speed; }
+      // spontaneous dawdling: stop to sniff/play, then trot to catch up
+      if (this.pauseT > 0) {
+        this.pauseT -= dt;
+      } else {
+        if (distM < 8) {
+          this.dawdleT -= dt;
+          if (this.dawdleT <= 0) {
+            this.dawdleT = 5 + Math.random() * 9;
+            if (Math.random() < 0.55) {
+              this.pauseT = 0.6 + Math.random() * 1.3;
+              this.stateLabel = ['sniffing the snow…', 'batting at a snowflake', 'shaking off snow', 'looking back at the trail'][Math.floor(Math.random() * 4)];
+            }
+          }
+        }
+        // follow the mother's TRAIL a few seconds behind, offset to one side —
+        // not her live position. This is what makes the follow look organic.
+        let tgt = mother.position;
+        const trail = mother.userData.trail;
+        if (trail?.length > 1 && distM < 25) {
+          const now = trail[trail.length - 1].t;
+          for (let i = trail.length - 1; i >= 0; i--) {
+            if (now - trail[i].t >= this.followDelay) { tgt = trail[i].p; break; }
+          }
+        }
+        const perp = new THREE.Vector3(tgt.z - this.pos.z, 0, -(tgt.x - this.pos.x));
+        if (perp.lengthSq() > 0.01) perp.normalize();
+        const goal = tgt.clone().addScaledVector(perp, this.lateral);
+        const dGoal = this.pos.distanceTo(goal);
+        if (dGoal > 1.6) {
+          target = goal;
+          wantSpeed = distM > 12 ? this.speed * 1.6 : dGoal > 5 ? this.speed : this.speed * 0.75;
+        }
+      }
     } else if (this.state === STATES.WANDER && this.wanderTarget) {
       target = this.wanderTarget;
       wantSpeed = this.speed * 0.7;
@@ -147,6 +186,13 @@ export class Cub {
       const dir = target.clone().sub(this.pos); dir.y = 0;
       if (dir.lengthSq() > 0.01) {
         dir.normalize();
+        // meandering sway — cubs never walk a straight line
+        if (this.state === STATES.FOLLOW && !this.inWater) {
+          const sway = Math.sin(this.animT * this.swayFreq + this.swayPhase) * 0.4 *
+            Math.max(0, 1 - this.pos.distanceTo(target) / 18);
+          const cos = Math.cos(sway), sin = Math.sin(sway);
+          dir.set(dir.x * cos - dir.z * sin, 0, dir.x * sin + dir.z * cos);
+        }
         // avoid siblings clumping
         for (const s of siblings) {
           if (s === this || !s.alive) continue;
@@ -154,10 +200,10 @@ export class Cub {
           if (d.length() < 1.4) dir.add(d.normalize().multiplyScalar(0.6));
         }
         dir.normalize();
-        this.vel = THREE.MathUtils.lerp(this.vel, wantSpeed, dt * 3);
+        this.vel = THREE.MathUtils.lerp(this.vel, wantSpeed, dt * 2.2);
         this.pos.addScaledVector(dir, this.vel * dt);
         // bear model faces +X
-        this.mesh.rotation.y = lerpAngle(this.mesh.rotation.y, Math.atan2(dir.x, dir.z) - Math.PI / 2, 8 * dt);
+        this.mesh.rotation.y = lerpAngle(this.mesh.rotation.y, Math.atan2(dir.x, dir.z) - Math.PI / 2, 5 * dt);
       }
     } else {
       this.vel = THREE.MathUtils.lerp(this.vel, 0, dt * 5);
@@ -183,9 +229,11 @@ function lerpAngle(a, b, t) {
 export function makeCubs(scene, world) {
   const siku = new Cub('Siku', {
     curiosity: 0.75, obedience: 0.35, speed: 3.4, color: 0xefe9d8,
+    followDelay: 1.1, lateral: 1.0,
   }, scene, world);
   const nukka = new Cub('Nukka', {
     curiosity: 0.15, obedience: 0.9, speed: 2.9, color: 0xe4ddcf,
+    followDelay: 2.3, lateral: -1.0,
   }, scene, world);
   return [siku, nukka];
 }

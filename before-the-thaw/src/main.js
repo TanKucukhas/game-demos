@@ -351,6 +351,15 @@ function updateMother(dt) {
   const gy = world.groundHeight(G.pos.x, G.pos.z);
   G.pos.y = G.inWater ? gy - 0.5 : gy;
 
+  // breadcrumb trail: cubs follow this with a personal delay
+  if (!mother.userData.trail) mother.userData.trail = [];
+  G.trailT = (G.trailT ?? 0) - dt;
+  if (G.trailT <= 0) {
+    mother.userData.trail.push({ p: G.pos.clone(), t: G.t });
+    if (mother.userData.trail.length > 90) mother.userData.trail.shift();
+    G.trailT = 0.12;
+  }
+
   mother.position.copy(G.pos);
   mother.userData.baseY = G.pos.y;
   mother.rotation.y = G.heading - Math.PI / 2;
