@@ -1,0 +1,286 @@
+{
+  "comment": "Kaçış Düzenekleri — TIM-DNA contraption puzzles. Outcomes are keyed by the slot assignment joined with commas in slot order; '*' matches any part in that slot. First matching key wins; 'success' outcomes unlock the next level. Steps DSL is executed by src/puzzle.js.",
+  "parts": {
+    "plank": { "label": "Kalas", "prop": "plank" },
+    "rope": { "label": "Halat", "prop": "rope" },
+    "crab": { "label": "Yengeç", "prop": "crab_0" },
+    "boot": { "label": "Bot", "prop": "boot" },
+    "bucket": { "label": "Kova", "prop": "bucket" }
+  },
+  "levels": [
+    {
+      "id": "kozceviz",
+      "title": "Közlü Ceviz",
+      "goal": "Cevizi palmiyeden ateşe ulaştır. Kazım közlenmiş ceviz istiyor, tırmanmak istemiyor.",
+      "slots": [{ "id": "A", "x": 252, "label": "palmiye altı" }],
+      "parts": ["plank", "bucket", "crab", "boot"],
+      "outcomes": {
+        "plank": {
+          "success": true,
+          "steps": [
+            { "op": "walk", "x": 268 },
+            { "op": "bubble", "txt": "izle şimdi" },
+            { "op": "prop", "name": "plank", "x": 236, "y": -7 },
+            { "op": "anim", "name": "reach", "sec": 1.2, "dir": 1 },
+            { "op": "palm", "on": true },
+            { "op": "arc", "name": "coconut", "fromX": 258, "fromY": -62, "toX": 250, "toY": -8, "sec": 0.7 },
+            { "op": "palm", "on": false },
+            { "op": "move", "name": "coconut", "toX": 240, "toY": -2, "sec": 0.9 },
+            { "op": "fire", "on": true },
+            { "op": "bubble", "txt": "közleniyor…" },
+            { "op": "wait", "sec": 1.2 },
+            { "op": "anim", "name": "happy", "sec": 2 },
+            { "op": "bubble", "txt": "mühendislik!" }
+          ],
+          "result": "Ceviz kalastan yuvarlanıp tam ateşin ortasına indi. Kazım'ın ilk düzeneği çalıştı — adada bir mühendis doğdu.",
+          "reward": { "morale": 6, "coconuts": 2 }
+        },
+        "bucket": {
+          "steps": [
+            { "op": "walk", "x": 268 },
+            { "op": "prop", "name": "bucket", "x": 250, "y": -6 },
+            { "op": "anim", "name": "reach", "sec": 1.2, "dir": 1 },
+            { "op": "palm", "on": true },
+            { "op": "arc", "name": "coconut", "fromX": 258, "fromY": -62, "toX": 252, "toY": -8, "sec": 0.7 },
+            { "op": "palm", "on": false },
+            { "op": "bubble", "txt": "güm." },
+            { "op": "move", "name": "bucket", "toX": 240, "toY": -4, "sec": 1.4 },
+            { "op": "fire", "on": true },
+            { "op": "anim", "name": "think", "sec": 2 },
+            { "op": "bubble", "txt": "kova da közlendi" }
+          ],
+          "result": "Ceviz kovaya girdi, Kazım kovayı közledi. Teknik olarak ortada közlenmiş bir şeyler var — ama plan bu değildi.",
+          "reward": { "morale": 2 }
+        },
+        "crab": {
+          "steps": [
+            { "op": "walk", "x": 268 },
+            { "op": "prop", "name": "crab_0", "x": 250, "y": 2 },
+            { "op": "anim", "name": "reach", "sec": 1.2, "dir": 1 },
+            { "op": "palm", "on": true },
+            { "op": "arc", "name": "coconut", "fromX": 258, "fromY": -62, "toX": 252, "toY": -4, "sec": 0.7 },
+            { "op": "palm", "on": false },
+            { "op": "move", "name": "crab_0", "toX": 305, "toY": 2, "sec": 1.6 },
+            { "op": "move", "name": "coconut", "toX": 305, "toY": -4, "sec": 1.6 },
+            { "op": "anim", "name": "sad", "sec": 2.4 },
+            { "op": "bubble", "txt": "…benimdi o" }
+          ],
+          "result": "Yengeç cevizi kaptı ve kayalığa taşıdı. Yengeç şu an adanın en tok canlısı.",
+          "reward": { "morale": -2 }
+        },
+        "boot": {
+          "steps": [
+            { "op": "walk", "x": 268 },
+            { "op": "prop", "name": "boot", "x": 250, "y": -8 },
+            { "op": "anim", "name": "reach", "sec": 1.2, "dir": 1 },
+            { "op": "palm", "on": true },
+            { "op": "arc", "name": "coconut", "fromX": 258, "fromY": -62, "toX": 251, "toY": -10, "sec": 0.7 },
+            { "op": "palm", "on": false },
+            { "op": "bubble", "txt": "tam isabet?" },
+            { "op": "move", "name": "boot", "toX": 240, "toY": -6, "sec": 1.2 },
+            { "op": "fire", "on": true },
+            { "op": "anim", "name": "shrug", "sec": 2 },
+            { "op": "bubble", "txt": "köz bot. tarif sende." }
+          ],
+          "result": "Ceviz botun içine kayboldu, Kazım botu közledi. Ada mutfağında bu akşam: köz bot, ceviz dolgulu.",
+          "reward": { "morale": 1, "boots": 1 }
+        }
+      }
+    },
+    {
+      "id": "sinyal",
+      "title": "Gemiye Sinyal",
+      "goal": "Gemi tam geçerken ateş yansın. Zamanlama her şeydir — Kazım'ın refleksleri değil.",
+      "slots": [
+        { "id": "A", "x": 258, "label": "palmiye" },
+        { "id": "B", "x": 242, "label": "ateş düzeneği" }
+      ],
+      "parts": ["rope", "crab", "plank", "boot"],
+      "outcomes": {
+        "rope,crab": {
+          "success": true,
+          "steps": [
+            { "op": "walk", "x": 220 },
+            { "op": "prop", "name": "rope", "x": 254, "y": -50 },
+            { "op": "prop", "name": "crab_0", "x": 244, "y": 2 },
+            { "op": "ship" },
+            { "op": "bubble", "txt": "bekle… bekle…" },
+            { "op": "wait", "sec": 3.2 },
+            { "op": "palm", "on": true },
+            { "op": "bubble", "txt": "ŞİMDİ!" },
+            { "op": "move", "name": "crab_0", "toX": 252, "toY": 2, "sec": 0.5 },
+            { "op": "palm", "on": false },
+            { "op": "fire", "on": true },
+            { "op": "anim", "name": "happy", "sec": 3 },
+            { "op": "bubble", "txt": "GÖRDÜLER!" },
+            { "op": "wait", "sec": 2 },
+            { "op": "bubble", "txt": "…el salladılar sadece", "x": 230 }
+          ],
+          "result": "Ateş tam zamanında yandı. Gemi durmadı — ama güvertedekiler el salladı ve biri fotoğraf çekti. Kazım artık birinin tatil albümünde.",
+          "reward": { "morale": 5, "attach": 5 }
+        },
+        "crab,rope": {
+          "steps": [
+            { "op": "walk", "x": 220 },
+            { "op": "prop", "name": "crab_0", "x": 256, "y": -52 },
+            { "op": "prop", "name": "rope", "x": 242, "y": -6 },
+            { "op": "ship" },
+            { "op": "bubble", "txt": "bekle… bekle…" },
+            { "op": "wait", "sec": 4 },
+            { "op": "bubble", "txt": "şimdi? …yengeç?" },
+            { "op": "wait", "sec": 2.5 },
+            { "op": "anim", "name": "sad", "sec": 2.5 },
+            { "op": "bubble", "txt": "uyuyor." }
+          ],
+          "result": "Yengeç palmiyenin tepesinde uyudu, halat ateşin yanında bekledi. Organizasyon şeması baştan yanlıştı.",
+          "reward": { "morale": -2 }
+        },
+        "*,boot": {
+          "steps": [
+            { "op": "walk", "x": 220 },
+            { "op": "prop", "name": "boot", "x": 242, "y": -6 },
+            { "op": "ship" },
+            { "op": "fire", "on": true },
+            { "op": "bubble", "txt": "kara duman??" },
+            { "op": "wait", "sec": 2.5 },
+            { "op": "anim", "name": "shrug", "sec": 2 },
+            { "op": "bubble", "txt": "gemi… hızlandı" }
+          ],
+          "result": "Yanan bot kapkara bir duman çıkardı. Bu SOS değil, 'sakın yaklaşmayın' sinyali. Gemi rotayı açtı.",
+          "reward": { "morale": -3 }
+        },
+        "plank,*": {
+          "steps": [
+            { "op": "walk", "x": 220 },
+            { "op": "prop", "name": "plank", "x": 246, "y": -12 },
+            { "op": "ship" },
+            { "op": "wait", "sec": 2 },
+            { "op": "prop", "name": "seagull_0", "x": 250, "y": -18 },
+            { "op": "bubble", "txt": "hayır. in oradan." },
+            { "op": "wait", "sec": 2 },
+            { "op": "anim", "name": "shrug", "sec": 2 }
+          ],
+          "result": "Kalas palmiyeye yaslandı, martı geldi, kondu, beğendi. Sinyal çıkmadı ama martı ev sahibi oldu.",
+          "reward": {}
+        }
+      },
+      "default": {
+        "steps": [
+          { "op": "walk", "x": 220 },
+          { "op": "ship" },
+          { "op": "anim", "name": "think", "sec": 3 },
+          { "op": "bubble", "txt": "bir şey eksik…" },
+          { "op": "wait", "sec": 2 },
+          { "op": "anim", "name": "shrug", "sec": 2 },
+          { "op": "bubble", "txt": "gemi gitti bu arada" }
+        ],
+        "result": "Parçalar birbirine küs durdu, düzenek tetiklenmedi. Gemi bu arada ufku terk etti — zamanlama her şeydir.",
+        "reward": { "morale": -1 }
+      }
+    },
+    {
+      "id": "mancinik",
+      "title": "Palmiye Mancınığı",
+      "goal": "Kazım'ı resifin ÜZERİNDEN fırlat. 31 yıldır adadan çıkamıyor — bugün fizik konuşacak.",
+      "slots": [
+        { "id": "A", "x": 258, "label": "palmiye" },
+        { "id": "B", "x": 196, "label": "rampa" },
+        { "id": "C", "x": 232, "label": "tetik" }
+      ],
+      "parts": ["rope", "plank", "crab", "bucket"],
+      "outcomes": {
+        "rope,plank,crab": {
+          "success": true,
+          "steps": [
+            { "op": "prop", "name": "rope", "x": 254, "y": -50 },
+            { "op": "prop", "name": "plank", "x": 188, "y": -10 },
+            { "op": "prop", "name": "crab_0", "x": 234, "y": 2 },
+            { "op": "walk", "x": 258 },
+            { "op": "palm", "on": true },
+            { "op": "bubble", "txt": "ya çalışırsa?" },
+            { "op": "anim", "name": "think", "sec": 1.6 },
+            { "op": "bubble", "txt": "YA ÇALIŞIRSA!" },
+            { "op": "move", "name": "crab_0", "toX": 252, "toY": 2, "sec": 0.6 },
+            { "op": "palm", "on": false },
+            { "op": "kazArc", "toX": 118, "peak": 70, "sec": 1.6 },
+            { "op": "splash", "x": 118, "y": 6 },
+            { "op": "bubble", "txt": "RESİFİ GEÇTİM!", "x": 122 },
+            { "op": "wait", "sec": 1.5 },
+            { "op": "swimBack", "toX": 176, "sec": 3 },
+            { "op": "anim", "name": "happy", "sec": 2.5 },
+            { "op": "bubble", "txt": "üç metre. AMA ÇIKTIM." }
+          ],
+          "result": "Kazım 31 yıl sonra ilk kez adanın dışına çıktı. Üç metre. Sonra yüzerek geri döndü — çünkü dönerken ada ona el sallıyormuş gibi geldi. Adaya bağlılık +15.",
+          "reward": { "morale": 10, "attach": 15 }
+        },
+        "plank,*,*": {
+          "steps": [
+            { "op": "prop", "name": "plank", "x": 250, "y": -40 },
+            { "op": "walk", "x": 258 },
+            { "op": "anim", "name": "work", "sec": 2.5 },
+            { "op": "bubble", "txt": "bük… BÜK…" },
+            { "op": "anim", "name": "sad", "sec": 2 },
+            { "op": "bubble", "txt": "bu ağaç yoga yapmıyor" }
+          ],
+          "result": "Kalas palmiyeyi bükemedi. Palmiye esnemeye karşı ilkesel bir duruş sergiledi.",
+          "reward": {}
+        },
+        "rope,bucket,*": {
+          "steps": [
+            { "op": "prop", "name": "rope", "x": 254, "y": -50 },
+            { "op": "prop", "name": "bucket", "x": 192, "y": -8 },
+            { "op": "walk", "x": 258 },
+            { "op": "palm", "on": true },
+            { "op": "bubble", "txt": "hedef: ufuk" },
+            { "op": "palm", "on": false },
+            { "op": "kazArc", "toX": 194, "peak": 40, "sec": 1.1 },
+            { "op": "bubble", "txt": "…", "x": 194 },
+            { "op": "anim", "name": "think", "sec": 2.5 },
+            { "op": "bubble", "txt": "kovadan çıkamıyorum" }
+          ],
+          "result": "Fırlatma başarılı, iniş kovaya. Kazım on dakika kafasında kovayla yürüdü — martı hâlâ taklidini yapıyor.",
+          "reward": { "morale": 1 }
+        },
+        "rope,*,bucket": {
+          "steps": [
+            { "op": "prop", "name": "rope", "x": 254, "y": -50 },
+            { "op": "prop", "name": "bucket", "x": 234, "y": -6 },
+            { "op": "walk", "x": 258 },
+            { "op": "palm", "on": true },
+            { "op": "bubble", "txt": "tetik hazır mı?" },
+            { "op": "wait", "sec": 3 },
+            { "op": "bubble", "txt": "kova? tetik?" },
+            { "op": "wait", "sec": 2 },
+            { "op": "anim", "name": "sad", "sec": 2.5 },
+            { "op": "bubble", "txt": "sabaha kadar bekledik" }
+          ],
+          "result": "Kova tetik olamadı — kovaların uzmanlık alanı değil. Kazım gerilmiş palmiyede sabahı etti. Palmiye de.",
+          "reward": { "morale": -2 }
+        },
+        "crab,*,*": {
+          "steps": [
+            { "op": "prop", "name": "crab_0", "x": 256, "y": -48 },
+            { "op": "walk", "x": 258 },
+            { "op": "anim", "name": "think", "sec": 2.5 },
+            { "op": "bubble", "txt": "yengeç halat değil" },
+            { "op": "wait", "sec": 1.5 },
+            { "op": "bubble", "txt": "yengeç bunu biliyordu" }
+          ],
+          "result": "Yengeç halat görevini kibarca reddetti. Yengeç bunu baştan biliyordu; Kazım bilmiyordu.",
+          "reward": {}
+        }
+      },
+      "default": {
+        "steps": [
+          { "op": "walk", "x": 230 },
+          { "op": "anim", "name": "work", "sec": 2.5 },
+          { "op": "wait", "sec": 1 },
+          { "op": "anim", "name": "shrug", "sec": 2 },
+          { "op": "bubble", "txt": "ama estetik duruyor" }
+        ],
+        "result": "Düzenek çalışmadı ama parçalar çok güzel durdu. Kazım bir çizimini yaptı, palmiyeye astı.",
+        "reward": {}
+      }
+    }
+  ]
+}

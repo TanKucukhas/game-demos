@@ -1,0 +1,40 @@
+{
+  "comment": "ADA vignette catalog. w=weight, cd=cooldown sec, min/max=play secs, cond: day|night|null, mood: comfort|neutral|sad (comedy pacing), anchor: named spot. Behavior hooks live in src/game.js BEHAVIORS registry, keyed by id.",
+  "scenes": [
+    { "id": "izle",   "name": "Denizi izle",        "w": 5,   "cd": 20,  "min": 8,  "max": 14, "anchor": "shore",  "anim": "sit",   "mood": "comfort" },
+    { "id": "yuru",   "name": "Sahil yürüyüşü",     "w": 5,   "cd": 20,  "min": 9,  "max": 15, "anchor": "shore",  "anim": "walk",  "mood": "neutral" },
+    { "id": "kosu",   "name": "Sabah koşusu",       "w": 3,   "cd": 40,  "min": 7,  "max": 10, "anchor": "shore",  "anim": "walk",  "mood": "comfort", "cond": "day" },
+    { "id": "balik",  "name": "Balık tut",          "w": 4,   "cd": 26,  "min": 10, "max": 16, "anchor": "fish",   "anim": "fish",  "mood": "neutral" },
+    { "id": "ceviz",  "name": "Hindistan cevizi",   "w": 3,   "cd": 30,  "min": 6,  "max": 9,  "anchor": "palm",   "anim": "reach", "mood": "neutral" },
+    { "id": "sal",    "name": "Sal inşası",         "w": 3,   "cd": 28,  "min": 8,  "max": 13, "anchor": "raft",   "anim": "work",  "mood": "neutral" },
+    { "id": "kum",    "name": "Kumdan kale",        "w": 2.5, "cd": 45,  "min": 8,  "max": 12, "anchor": "sand",   "anim": "work",  "mood": "comfort", "cond": "day" },
+    { "id": "ates",   "name": "Kamp ateşi",         "w": 3,   "cd": 40,  "min": 9,  "max": 14, "anchor": "fire",   "anim": "sit",   "mood": "comfort", "cond": "night" },
+    { "id": "yildiz", "name": "Yıldızları izle",    "w": 4,   "cd": 35,  "min": 9,  "max": 14, "anchor": "lie",    "anim": "lie",   "mood": "comfort", "cond": "night" },
+    { "id": "sise",   "name": "Şişede mesaj",       "w": 1.5, "cd": 120, "min": 8,  "max": 8,  "anchor": "shore",  "anim": "think", "mood": "neutral", "chainNext": { "id": "sise_geri", "delayDays": 1 } },
+    { "id": "sise_geri", "name": "Şişe geri geldi", "w": 0,   "cd": 0,   "min": 8,  "max": 8,  "anchor": "shore",  "anim": "sad",   "mood": "sad", "chainOnly": true },
+    { "id": "gemi",   "name": "Gemi geçiyor!",      "w": 0.6, "cd": 180, "min": 20, "max": 20, "anchor": "fish",   "anim": "happy", "mood": "sad" },
+    { "id": "yengec", "name": "Yengeç ziyareti",    "w": 1.2, "cd": 100, "min": 9,  "max": 9,  "anchor": "rock",   "anim": "walk",  "mood": "neutral" },
+    { "id": "marti",  "name": "Martı baskını",      "w": 1.0, "cd": 110, "min": 7,  "max": 7,  "anchor": "sand",   "anim": "shrug", "mood": "sad", "cond": "day" },
+    { "id": "kacis",  "name": "Kaçış denemesi",     "w": 0,   "cd": 0,   "min": 22, "max": 22, "anchor": "raft",   "anim": "work",  "mood": "sad", "chainOnly": true }
+  ],
+  "suggestions": [
+    {
+      "id": "oner_sal", "label": "🔨 Sal yap", "spot": "raft",
+      "accept": { "p": 0.62, "scene": "sal", "bubble": "iyi fikir!" },
+      "misfire": { "p": 0.28, "bubble": "sandalye daha lazımdı", "effect": "chair", "toast": "Kazım salı yanlış anladı: odunlardan bir sandalye yaptı. Manzara için, diyor." },
+      "refuse": { "bubble": "şimdi olmaz, gelgit ters" }
+    },
+    {
+      "id": "oner_balik", "label": "🎣 Balık tut", "spot": "fish",
+      "accept": { "p": 0.62, "scene": "balik", "bubble": "karnım da acıkmıştı" },
+      "misfire": { "p": 0.28, "bubble": "yine mi bot?!", "effect": "boot", "toast": "Kazım oltaya sarıldı ama denizden bir bot çıkardı. Koleksiyon büyüyor." },
+      "refuse": { "bubble": "balıklar bugün küskün" }
+    },
+    {
+      "id": "oner_ates", "label": "🔥 Ateş yak", "spot": "fire",
+      "accept": { "p": 0.62, "scene": "ates", "bubble": "közlenecek bir şey bul" },
+      "misfire": { "p": 0.28, "bubble": "cevizi közledim, oldu mu?", "effect": "roast_coconut", "toast": "Kazım ateş yerine hindistan cevizini közledi. Lezzetliymiş ama plan bu değildi." },
+      "refuse": { "bubble": "rüzgâr ters esiyor" }
+    }
+  ]
+}

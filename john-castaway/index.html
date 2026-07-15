@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADA · M1 — gerçek artwork'lü vignette motoru</title>
+<style>
+  :root{
+    --bg:#0f1317; --panel:#171d23; --line:#26303a; --line2:#2a3440;
+    --ink:#dfe7ec; --ink-dim:#8fa0ab; --ink-faint:#5c6b76;
+    --accent:#e07a3f; --accent-soft:#e07a3f66;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--mono); -webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px; margin:0 auto; padding:22px 16px 40px}
+  header{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:14px}
+  h1{margin:0; font-size:15px; font-weight:700; letter-spacing:.42em; text-transform:uppercase; color:#eef4f7}
+  h1 .palm{color:var(--accent); letter-spacing:0}
+  .sub{font-size:11px; color:var(--ink-dim); letter-spacing:.04em}
+
+  .stage{position:relative; background:#000; border:1px solid #232c35; border-radius:10px; overflow:hidden}
+  canvas{display:block; width:100%; height:auto; image-rendering:pixelated; image-rendering:crisp-edges}
+  .chip{position:absolute; font-size:10.5px; letter-spacing:.03em; padding:3px 8px; border-radius:6px;
+    color:#cfd8dc; background:rgba(11,15,19,.78); border:1px solid var(--line); pointer-events:none}
+  #chipClock{top:8px; left:8px}
+  #chipScene{top:8px; right:8px; color:#efe6d2}
+  #chipScene b{color:var(--accent); font-weight:700}
+  #chipDay{bottom:8px; left:8px}
+
+  .controls{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 6px}
+  button{font-family:var(--mono); font-size:12px; letter-spacing:.02em; background:var(--panel); color:var(--ink);
+    border:1px solid var(--line2); border-radius:8px; padding:9px 13px; min-height:40px; cursor:pointer}
+  button:hover{border-color:var(--accent-soft)}
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  button.suggest{border-color:#3a4a3a}
+  button.suggest:disabled{opacity:.45; cursor:default}
+  .counters{font-size:12px; color:#b9c6cf; margin:8px 0 4px; letter-spacing:.03em}
+  .counters b{color:#efe6d2; font-weight:700}
+
+  .meters{display:flex; gap:18px; margin:8px 0 14px; font-size:10.5px; color:var(--ink-dim)}
+  .meter{display:flex; align-items:center; gap:7px}
+  .bar{width:90px; height:6px; background:#12171c; border:1px solid var(--line); border-radius:3px; overflow:hidden}
+  .bar i{display:block; height:100%; background:var(--accent); width:0%; transition:width .6s}
+  #barAttach i{background:#5a9c63}
+
+  .journalHead{font-size:10.5px; color:var(--ink-dim); letter-spacing:.14em; text-transform:uppercase; margin-bottom:7px}
+  .journal{display:flex; flex-wrap:wrap; gap:6px}
+  .jchip{font-size:10.5px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
+    color:var(--ink-faint); background:#12171c; transition:color .25s,border-color .25s,background .25s}
+  .jchip.seen{color:#efe6d2; border-color:var(--accent-soft); background:#1b1510}
+  .jchip.live{box-shadow:0 0 0 1px var(--accent)}
+
+  .puzzle-btn{border-color:var(--accent-soft); color:#efe6d2}
+  #puzzlePanel{
+    margin:10px 0 4px; padding:14px; border:1px solid var(--line2); border-left:3px solid var(--accent);
+    border-radius:10px; background:var(--panel); display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  }
+  .pz-head{flex-basis:100%; font-size:13px; font-weight:700; color:#efe6d2; letter-spacing:.06em}
+  .pz-goal{flex-basis:100%; font-size:11.5px; line-height:1.6; color:var(--ink-dim)}
+  .pz-level{min-width:200px; text-align:left}
+  .pz-slots{display:flex; gap:14px; flex-wrap:wrap}
+  .pz-slots label{display:flex; flex-direction:column; gap:5px; font-size:10.5px; color:var(--ink-dim)}
+  .pz-slots select{
+    font-family:var(--mono); font-size:12px; background:#12171c; color:var(--ink);
+    border:1px solid var(--line2); border-radius:7px; padding:8px 10px; min-height:38px;
+  }
+  .pz-actions{display:flex; gap:8px; margin-left:auto}
+  .pz-run{border-color:var(--accent); color:#ffdcc2; font-weight:700}
+  .pz-run:disabled{opacity:.4; cursor:default}
+  .pz-back,.pz-close{color:var(--ink-dim)}
+
+  #toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); max-width:min(560px,90vw);
+    font-size:12px; line-height:1.5; background:#1a2129; border:1px solid #33404d; border-left:3px solid var(--accent);
+    color:#e6edf1; padding:10px 14px; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .3s}
+  #toast.show{opacity:1}
+
+  footer{margin-top:22px; font-size:10.5px; line-height:1.7; color:#6b7a85}
+  footer b{color:#93a4af; font-weight:700}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ADA<span class="palm"> ⸙</span></h1>
+    <span class="sub">kazazede vignette motoru · M1 — spritesheet sürümü</span>
+  </header>
+
+  <div class="stage">
+    <canvas id="cv" width="480" height="270" aria-label="Ada sahnesi: Kazım tek palmiyeli adada yaşıyor"></canvas>
+    <div class="chip" id="chipClock">--:--</div>
+    <div class="chip" id="chipScene">sahne: <b>—</b></div>
+    <div class="chip" id="chipDay">gün 1</div>
+  </div>
+
+  <div class="controls">
+    <button id="btnPuzzle" type="button" class="puzzle-btn">🧩 Düzenek Masası</button>
+    <button id="btnTime" type="button">Zaman: Gerçek</button>
+    <button id="btnPip" type="button" hidden>Küçük pencere (PiP)</button>
+    <span style="flex:1"></span>
+    <span id="suggestBtns"></span>
+  </div>
+
+  <div id="puzzlePanel" hidden></div>
+
+  <div class="counters">🥥 <b id="cCoco">0</b> · 🐟 <b id="cFish">0</b> · 🥾 <b id="cBoot">0</b> · 🔨 sal <b id="cRaft">%0</b></div>
+
+  <div class="meters">
+    <div class="meter">moral <span class="bar" id="barMorale"><i></i></span></div>
+    <div class="meter">adaya bağlılık <span class="bar" id="barAttach"><i></i></span></div>
+  </div>
+
+  <div class="journalHead">Vignette günlüğü · <span id="jCount">0/0</span></div>
+  <div class="journal" id="journal"></div>
+
+  <footer>
+    <b>Notlar:</b> Tüm sprite'lar bu repo'nun kendi pipeline'ında üretilmiş özgün artwork
+    (<code>node tools/spritegen.js</code>) — hiçbir Johnny Castaway varlığı kullanılmadı.
+    Önerilerin emir değil: Kazım kabul edebilir, reddedebilir ya da yanlış anlayabilir.
+    Kayıt localStorage'da; sekmeden ayrılıp dönersen "sen yokken" özeti gelir.
+  </footer>
+</div>
+
+<video id="pipVideo" muted playsinline style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none"></video>
+<div id="toast" role="status"></div>
+<script type="module" src="src/game.js"></script>
+</body>
+</html>
