@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Before the Thaw — The First Hunt</title>
+  <style>
+    :root {
+      --bone: #f3edde;
+      --bone-dim: rgba(240, 233, 218, 0.72);
+      --ink: #0c161f;
+      --ochre: #c9924e;
+      --ember: #d96f4a;
+      --glacial: #9cc3dd;
+      --halo: 0 1px 3px rgba(4, 9, 15, 0.95), 0 0 14px rgba(4, 9, 15, 0.6), 0 0 34px rgba(4, 9, 15, 0.35);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--ink); }
+    body { font-family: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif; color: var(--bone); }
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; }
+    svg { overflow: visible; }
+
+    /* ================= HUD — field-journal style, no cards ================= */
+    #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+    #hud * { text-shadow: var(--halo); }
+    /* cinematic scrims so type reads over bright snow */
+    #hud::before, #hud::after { content: ''; position: absolute; left: 0; right: 0; pointer-events: none; }
+    #hud::before { top: 0; height: 220px;
+      background: linear-gradient(180deg, rgba(8,16,26,0.66), rgba(8,16,26,0.26) 55%, transparent); }
+    #hud::after { bottom: 0; height: 230px;
+      background: linear-gradient(0deg, rgba(8,16,26,0.8), rgba(8,16,26,0.34) 55%, transparent); }
+    .meters, #windrose, #scent, #storm, #stance, #prompt, #msg, #controls { z-index: 1; }
+
+    .smallcaps {
+      font-variant: small-caps;
+      letter-spacing: 0.22em;
+      font-weight: 500;
+    }
+
+    /* ---- vitals: engraved rules, diamond terminals ---- */
+    .meters { position: absolute; top: 26px; left: 30px; display: flex; flex-direction: column; gap: 17px; }
+    .vital .vlabel {
+      display: flex; align-items: baseline; gap: 10px;
+      font-size: 16px; font-variant: small-caps; letter-spacing: 0.24em; font-weight: 600;
+    }
+    .vital .vlabel .num { font-size: 13px; letter-spacing: 0.08em; color: var(--bone-dim); font-variant: normal; }
+    .track { position: relative; margin-top: 6px; height: 1px; background: rgba(240,233,218,0.55);
+             box-shadow: 0 1px 3px rgba(8,16,26,0.6); }
+    .track::before, .track::after {
+      content: ''; position: absolute; top: -2.5px; width: 6px; height: 6px;
+      background: var(--bone-dim); transform: rotate(45deg);
+    }
+    .track::before { left: -3px; } .track::after { right: -3px; }
+    .track .fill {
+      position: absolute; left: 0; top: -1.5px; height: 4px;
+      background: linear-gradient(90deg, var(--ochre), var(--bone));
+      transition: width 0.6s cubic-bezier(.4,0,.3,1);
+      box-shadow: 0 0 8px rgba(201,146,78,0.5);
+    }
+    .vital.mother .track { width: 200px; }
+    .vital.cub .track { width: 132px; }
+    .vital.cub .track .fill { background: linear-gradient(90deg, var(--glacial), var(--bone)); box-shadow: 0 0 8px rgba(156,195,221,0.4); }
+    .vital.cub .vlabel { font-size: 13.5px; }
+    .cubstate { font-style: italic; font-size: 14.5px; margin-top: 4px; color: var(--bone-dim); font-weight: 400; }
+    .pawmark { width: 13px; height: 13px; opacity: 0.85; align-self: center; }
+
+    /* ---- wind rose (top right) ---- */
+    #windrose { position: absolute; top: 26px; right: 34px; width: 96px; text-align: center;
+                filter: drop-shadow(0 1px 4px rgba(8,16,26,0.8)); }
+    #windrose .lbl { font-size: 12px; margin-top: 2px; color: var(--bone-dim); }
+    #windArrow, #scentArrow { transform-box: fill-box; transform-origin: 50% 50%; }
+    #windArrow { transition: transform 0.8s cubic-bezier(.4,0,.3,1); }
+
+    /* ---- scent (below wind rose) ---- */
+    #scent { position: absolute; top: 152px; right: 34px; width: 96px; text-align: center;
+             filter: drop-shadow(0 1px 4px rgba(8,16,26,0.8)); }
+    #scent .lbl { font-size: 12px; color: var(--bone-dim); font-variant: small-caps; letter-spacing: 0.22em; }
+    #scentArrow { transform-origin: 50% 50%; transition: transform 0.5s ease, opacity 0.5s ease; }
+    #scent .val { font-size: 15px; font-style: italic; margin-top: 1px; letter-spacing: 0.06em; }
+    #scent.hot .val { color: var(--ember); }
+    #scent.hot #scentGlow { opacity: 0.9; }
+    #scent.warm .val { color: var(--ochre); }
+    #scent.warm #scentGlow { opacity: 0.45; }
+    #scent.cold .val { color: var(--bone-dim); }
+    #scent.cold #scentGlow { opacity: 0; }
+
+    /* ---- storm (top centre): thin rule + time ---- */
+    #storm { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); text-align: center; }
+    #storm .lbl { font-size: 12px; color: var(--bone-dim); font-variant: small-caps; letter-spacing: 0.34em; }
+    #storm .t { font-size: 30px; font-weight: 500; letter-spacing: 0.14em; line-height: 1.1; }
+    #storm .rule { width: 120px; height: 1px; margin: 5px auto 0;
+                   background: linear-gradient(90deg, transparent, var(--bone-dim), transparent); }
+    #storm.urgent .t { color: var(--ember); }
+    #storm.urgent .rule { background: linear-gradient(90deg, transparent, var(--ember), transparent); }
+
+    /* ---- stance (bottom left) ---- */
+    #stance { position: absolute; bottom: 34px; left: 30px; font-size: 14px;
+              font-variant: small-caps; letter-spacing: 0.28em; color: var(--bone-dim); }
+    #stance::before { content: '— '; color: var(--ochre); }
+    #stance.stalking { color: var(--ochre); }
+
+    /* ---- messages: documentary subtitles ---- */
+    #msg { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+           max-width: 700px; text-align: center; font-size: 22px; font-style: italic; font-weight: 400;
+           line-height: 1.55; opacity: 0; transition: opacity 0.7s; padding: 0 24px; }
+    #msg.show { opacity: 1; }
+
+    /* ---- interaction prompt ---- */
+    #prompt { position: absolute; bottom: 190px; left: 50%; transform: translateX(-50%);
+              font-size: 17px; opacity: 0; transition: opacity 0.3s; letter-spacing: 0.04em; }
+    #prompt.show { opacity: 1; }
+    #prompt b { color: var(--ochre); font-variant: small-caps; letter-spacing: 0.18em; font-weight: 600; }
+
+    /* ---- controls: one quiet line ---- */
+    #controls { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+                font-size: 13px; letter-spacing: 0.14em; font-variant: small-caps;
+                color: rgba(240,233,218,0.95); white-space: nowrap; }
+    #controls b { color: var(--ochre); font-weight: 600; }
+    #controls i { font-style: normal; opacity: 0.5; margin: 0 7px; }
+
+    /* ================= screens ================= */
+    .screen { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+              background:
+                radial-gradient(ellipse at 50% 20%, rgba(26, 46, 66, 0.75), rgba(6, 12, 20, 0.96) 75%),
+                linear-gradient(180deg, #101d2b, #060c14);
+              transition: opacity 1s; }
+    .screen::after { /* film grain */
+      content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.05;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .screen.hidden { opacity: 0; pointer-events: none; visibility: hidden; }
+    .screen .inner { max-width: 660px; text-align: center; padding: 40px; position: relative; z-index: 1; }
+    .screen .rule { width: 200px; height: 1px; margin: 26px auto;
+                    background: linear-gradient(90deg, transparent, rgba(236,229,212,0.5), transparent); }
+    .screen .rule::after { content: ''; }
+    .screen h1 { font-size: 58px; font-weight: 400; letter-spacing: 0.22em; text-indent: 0.22em; line-height: 1.15; }
+    .screen h2 { font-size: 15px; font-weight: 500; letter-spacing: 0.5em; text-indent: 0.5em;
+                 font-variant: small-caps; color: var(--ochre); margin-top: 10px; }
+    .screen p { font-size: 18px; line-height: 1.75; color: var(--bone-dim); margin-bottom: 14px; font-weight: 400; }
+    .screen p em { color: var(--bone); }
+    .screen button { pointer-events: auto; margin-top: 8px; font-size: 16px; letter-spacing: 0.34em; text-indent: 0.34em;
+                     font-variant: small-caps; font-weight: 500;
+                     background: transparent; color: var(--bone); border: none; cursor: pointer;
+                     padding: 14px 30px; font-family: inherit; position: relative; transition: color 0.3s; }
+    .screen button::before, .screen button::after {
+      content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+      width: 46px; height: 1px; background: var(--ochre); transition: width 0.35s ease; }
+    .screen button::before { top: 0; } .screen button::after { bottom: 0; }
+    .screen button:hover { color: var(--ochre); }
+    .screen button:hover::before, .screen button:hover::after { width: 130px; }
+    .screen .keys { font-size: 14.5px; color: rgba(236,229,212,0.4); margin-top: 30px; line-height: 2.1; font-style: italic; }
+    .screen .keys b { color: rgba(201,146,78,0.8); font-style: normal; }
+    .lessons { font-size: 15.5px; text-align: left; display: inline-block; margin-top: 4px;
+               color: var(--bone-dim); line-height: 2.1; font-style: italic; }
+
+    #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0;
+                background: radial-gradient(ellipse at center, transparent 40%, rgba(205,220,232,0.55) 100%);
+                transition: opacity 2s; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="vignette"></div>
+
+  <div id="hud" style="display:none">
+    <div class="meters">
+      <div class="vital mother">
+        <div class="vlabel">Mother <span class="num" id="energyVal"></span></div>
+        <div class="track"><div class="fill" id="energyBar" style="width:50%"></div></div>
+      </div>
+      <div class="vital cub">
+        <div class="vlabel">
+          <svg class="pawmark" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="15.5" rx="5.5" ry="4.5"/><circle cx="5.5" cy="10.5" r="2.2"/><circle cx="10" cy="7.5" r="2.2"/><circle cx="14.5" cy="7.5" r="2.2"/><circle cx="18.8" cy="10.5" r="2.2"/></svg>
+          Siku <span class="num" id="sikuVal"></span>
+        </div>
+        <div class="track"><div class="fill" id="sikuBar" style="width:15%"></div></div>
+        <div class="cubstate" id="sikuState">curious…</div>
+      </div>
+      <div class="vital cub">
+        <div class="vlabel">
+          <svg class="pawmark" viewBox="0 0 24 24" fill="currentColor"><ellipse cx="12" cy="15.5" rx="5.5" ry="4.5"/><circle cx="5.5" cy="10.5" r="2.2"/><circle cx="10" cy="7.5" r="2.2"/><circle cx="14.5" cy="7.5" r="2.2"/><circle cx="18.8" cy="10.5" r="2.2"/></svg>
+          Nukka <span class="num" id="nukkaVal"></span>
+        </div>
+        <div class="track"><div class="fill" id="nukkaBar" style="width:15%"></div></div>
+        <div class="cubstate" id="nukkaState">close to you</div>
+      </div>
+    </div>
+
+    <!-- wind rose -->
+    <div id="windrose">
+      <svg width="96" height="96" viewBox="0 0 96 96" fill="none" stroke="#ece5d4" stroke-width="1">
+        <circle cx="48" cy="48" r="34" stroke-opacity="0.4"/>
+        <circle cx="48" cy="48" r="2" fill="#ece5d4" fill-opacity="0.5" stroke="none"/>
+        <!-- cardinal ticks -->
+        <line x1="48" y1="8" x2="48" y2="16" stroke-opacity="0.8"/>
+        <line x1="48" y1="80" x2="48" y2="88" stroke-opacity="0.45"/>
+        <line x1="8" y1="48" x2="16" y2="48" stroke-opacity="0.45"/>
+        <line x1="80" y1="48" x2="88" y2="48" stroke-opacity="0.45"/>
+        <text x="48" y="5" text-anchor="middle" fill="#ece5d4" stroke="none" font-size="10" font-family="inherit" opacity="0.8">N</text>
+        <!-- feathered wind arrow -->
+        <g id="windArrow" stroke="#c9924e" stroke-width="1.6" stroke-linecap="round">
+          <line x1="48" y1="26" x2="48" y2="66"/>
+          <path d="M48 70 L43 60 M48 70 L53 60" />
+          <path d="M48 30 L43.5 35 M48 37 L43.5 42" stroke-opacity="0.7"/>
+        </g>
+      </svg>
+      <div class="lbl smallcaps">wind</div>
+    </div>
+
+    <!-- scent -->
+    <div id="scent" class="cold">
+      <svg width="72" height="46" viewBox="0 0 72 46" fill="none">
+        <g id="scentGlow" opacity="0" stroke="#c9924e" stroke-width="1.2" stroke-linecap="round">
+          <path d="M22 34 Q26 26 22 18 Q18 10 22 4" opacity="0.5"/>
+          <path d="M36 36 Q40 27 36 18 Q32 9 36 2"/>
+          <path d="M50 34 Q54 26 50 18 Q46 10 50 4" opacity="0.5"/>
+        </g>
+        <g id="scentArrow" opacity="0.15">
+          <path d="M36 12 L41 26 L36 22.5 L31 26 Z" fill="#ece5d4"/>
+        </g>
+      </svg>
+      <div class="lbl">seal scent</div>
+      <div class="val" id="scentVal">—</div>
+    </div>
+
+    <div id="storm">
+      <div class="lbl">storm front</div>
+      <div class="t" id="stormT">6:00</div>
+      <div class="rule"></div>
+    </div>
+
+    <div id="stance" class="smallcaps">Walking</div>
+    <div id="prompt"></div>
+    <div id="msg"></div>
+
+    <div id="controls">
+      <b>w a s d</b> move <i>·</i> <b>shift</b> run <i>·</i> <b>c</b> stalk <i>·</i>
+      <b>space</b> pounce <i>·</i> <b>q</b> call <i>·</i> <b>e</b> stay <i>·</i> <b>f</b> nurse
+    </div>
+  </div>
+
+  <div class="screen" id="titleScreen">
+    <div class="inner">
+      <h1>BEFORE<br/>THE THAW</h1>
+      <h2>the first hunt</h2>
+      <div class="rule"></div>
+      <p>Four months in the dark of the den. Nothing to eat.<br/>Her body has been turning itself into milk.</p>
+      <p>Now the ice is waiting — and everything her cubs will ever know,<br/><em>they will learn from watching her.</em></p>
+      <button id="startBtn">Begin</button>
+      <div class="keys">
+        Approach the seal from <b>downwind</b>, low, in stalk. It hears everything.<br/>
+        Dark ice will not carry your weight. Your cubs are lighter than you.<br/>
+        A cub that watches the kill, learns the kill.
+      </div>
+    </div>
+  </div>
+
+  <div class="screen hidden" id="endScreen">
+    <div class="inner">
+      <h1 id="endTitle" style="font-size:44px">The Storm Arrives</h1>
+      <div class="rule"></div>
+      <p id="endBody"></p>
+      <div class="lessons" id="endLessons"></div>
+      <br/>
+      <button id="retryBtn">Once More</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

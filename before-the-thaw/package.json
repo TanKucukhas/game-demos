@@ -1,0 +1,23 @@
+{
+  "name": "before-the-thaw",
+  "version": "0.1.0",
+  "description": "Before the Thaw — The First Hunt (vertical slice). A systemic parenting adventure as a mother polar bear.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "assets": "node tools/generate-assets.mjs",
+    "assets:models": "node tools/generate-assets.mjs --models-only",
+    "assets:audio": "node tools/generate-assets.mjs --audio-only"
+  },
+  "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.2.11",
+    "three": "^0.185.1",
+    "vite": "^8.1.4"
+  },
+  "devDependencies": {
+    "fbx2gltf": "^0.9.7-p1",
+    "playwright": "^1.61.1"
+  }
+}

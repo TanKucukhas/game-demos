@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>model check</title>
+<style>body{margin:0;background:#223}</style></head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x28303c);
+const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.2));
+const dl = new THREE.DirectionalLight(0xffffff, 2); dl.position.set(3, 5, 2); scene.add(dl);
+const url = new URLSearchParams(location.search).get('m') || '/models/polar_bear_mother.glb';
+const gltf = await new GLTFLoader().loadAsync(url);
+const model = gltf.scene;
+const box = new THREE.Box3().setFromObject(model);
+const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+model.position.sub(c);
+scene.add(model);
+const r = Math.max(size.x, size.y, size.z);
+let a = 0.6;
+function tick() {
+  requestAnimationFrame(tick);
+  a += 0.004;
+  cam.position.set(Math.cos(a) * r * 1.7, r * 0.5, Math.sin(a) * r * 1.7);
+  cam.lookAt(0, 0, 0);
+  renderer.render(scene, cam);
+}
+tick();
+window.__ready = true;
+</script>
+</body>
+</html>
