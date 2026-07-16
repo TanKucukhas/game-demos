@@ -39,7 +39,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const MESHY_MODELS = [
   {
     file: 'polar_bear_mother.glb',
-    prompt: 'adult female polar bear standing perfectly still in a neutral rest pose, all four legs straight and vertical like table legs, feet shoulder-width apart, head facing straight forward, tail relaxed, symmetrical body, mouth closed, realistic proportions, thick white fur, clean topology suitable for auto-rigging and animation, game-ready',
+    prompt: 'adult female polar bear standing perfectly still, all four legs perfectly straight and vertical at 90 degrees like four pillars, no bent joints, no walking pose, front legs parallel, hind legs parallel, clear gaps between all four legs, head level facing forward, mouth closed, symmetrical, realistic white fur, NO base, NO pedestal, NO platform, NO ground plane, only the bear itself, feet ending flat at the bottom, clean topology for auto-rigging, game-ready',
   },
   {
     file: 'polar_bear_cub.glb',
