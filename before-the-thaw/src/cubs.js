@@ -35,6 +35,8 @@ export class Cub {
     this.animT = Math.random() * 10;
     this.inWater = false;
     this.waterTimer = 0;
+    this.stamina = 1;         // swim endurance 0..1
+    this.playUntil = 0;       // bonding play window
     this.alive = true;
   }
 
@@ -86,21 +88,39 @@ export class Cub {
     this.animT += dt;
     const g = this.world.groundHeight(this.pos.x, this.pos.z);
 
-    // thin-ice check: cubs are light — safe unless the patch is broken (open water)
+    // water check: broken thin ice or the open lead. Cubs can swim while
+    // their stamina lasts; when it runs out the clock starts.
     this.inWater = false;
     for (const p of this.world.thinIce) {
       if (p.broken && this.pos.distanceTo(new THREE.Vector3(p.x, this.pos.y, p.z)) < p.r) {
         this.inWater = true;
       }
     }
+    if (this.world.inLead?.(this.pos.x, this.pos.z)) this.inWater = true;
     if (this.inWater) {
-      this.waterTimer += dt;
-      this.state = STATES.DISTRESS;
-      this.stateLabel = '❗ IN THE WATER — help!';
+      this.stamina = Math.max(0, this.stamina - dt / 11);
+      if (this.stamina <= 0) {
+        this.waterTimer += dt;
+        this.state = STATES.DISTRESS;
+        this.stateLabel = '❗ EXHAUSTED IN THE WATER — help!';
+      } else if (this.state !== STATES.DISTRESS) {
+        this.stateLabel = this.stamina < 0.35 ? 'tiring in the water…' : 'swimming behind you';
+      }
     } else {
+      this.stamina = Math.min(1, this.stamina + dt / 6);
       this.waterTimer = Math.max(0, this.waterTimer - dt * 0.5);
       if (this.state === STATES.DISTRESS) { this.state = STATES.FOLLOW; this.stateLabel = 'shaken but safe'; }
     }
+
+    // flee from adult males
+    for (const d of (this.world.dangers || [])) {
+      if (this.pos.distanceTo(d) < 10 && !this.inWater) {
+        this.state = STATES.FOLLOW;
+        this.fleeing = 1.2;
+        this.stateLabel = '❗ fleeing the male bear!';
+      }
+    }
+    this.fleeing = Math.max(0, (this.fleeing || 0) - dt);
 
     const toMother = mother.position.clone().sub(this.pos);
     toMother.y = 0;
@@ -178,8 +198,19 @@ export class Cub {
     }
 
     if (this.inWater) {
-      // struggle toward nearest solid edge (toward mother)
-      target = mother.position; wantSpeed = this.speed * 0.25;
+      // swim after the mother (slow when exhausted)
+      target = mother.position;
+      wantSpeed = this.stamina > 0 ? this.speed * 0.55 : this.speed * 0.22;
+    }
+    if (this.fleeing > 0) {
+      target = mother.position; wantSpeed = this.speed * 1.7;
+    }
+    if (this.playUntil > this.animT && !this.inWater) {
+      // romp in circles around the mother
+      const a = this.animT * 2.2 + this.swayPhase;
+      target = mother.position.clone().add(new THREE.Vector3(Math.cos(a) * 3, 0, Math.sin(a) * 3));
+      wantSpeed = this.speed * 1.2;
+      this.stateLabel = ['play-fighting!', 'romping in the snow', 'pouncing on the sibling', 'tumbling'][Math.floor(this.animT / 2) % 4];
     }
 
     if (target) {

@@ -154,6 +154,14 @@
     .lessons { font-size: 15.5px; text-align: left; display: inline-block; margin-top: 4px;
                color: var(--bone-dim); line-height: 2.1; font-style: italic; }
 
+    /* ---- chapter cards ---- */
+    #chapter { position: absolute; top: 34%; left: 50%; transform: translateX(-50%); text-align: center;
+               opacity: 0; transition: opacity 1.2s ease; pointer-events: none; }
+    #chapter.show { opacity: 1; }
+    #chapter .act { font-size: 14px; font-variant: small-caps; letter-spacing: 0.55em; text-indent: 0.55em;
+                    color: var(--ochre); margin-bottom: 8px; }
+    #chapter .ctitle { font-size: 44px; font-weight: 400; letter-spacing: 0.18em; text-indent: 0.18em; }
+
     #vignette { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0;
                 background: radial-gradient(ellipse at center, transparent 40%, rgba(205,220,232,0.55) 100%);
                 transition: opacity 2s; }
@@ -231,12 +239,14 @@
     </div>
 
     <div id="stance" class="smallcaps">Walking</div>
+    <div id="chapter"></div>
     <div id="prompt"></div>
     <div id="msg"></div>
 
     <div id="controls">
       <b>w a s d</b> move <i>·</i> <b>shift</b> run <i>·</i> <b>c</b> stalk <i>·</i>
-      <b>space</b> pounce <i>·</i> <b>q</b> call <i>·</i> <b>e</b> stay <i>·</i> <b>f</b> nurse
+      <b>space</b> pounce / face off <i>·</i> <b>q</b> call <i>·</i> <b>e</b> stay <i>·</i>
+      <b>f</b> nurse / feed <i>·</i> <b>r</b> rest <i>·</i> <b>g</b> play
     </div>
   </div>
 
@@ -263,6 +273,7 @@
       <p id="endBody"></p>
       <div class="lessons" id="endLessons"></div>
       <br/>
+      <button id="legacyBtn" style="display:none; margin-right: 18px;"></button>
       <button id="retryBtn">Once More</button>
     </div>
   </div>

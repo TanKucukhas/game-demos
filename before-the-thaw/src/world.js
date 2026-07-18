@@ -212,6 +212,59 @@ export function createWorld(scene, renderer) {
   aurora.rotation.x = 0.25;
   scene.add(aurora);
 
+  // --- open-water lead (west): swim crossing with a south-running current ---
+  const lead = { x0: -56, x1: -40, z0: -25, z1: 110, current: -1.9 };
+  const leadMat = new THREE.MeshPhysicalMaterial({
+    color: 0x123246, roughness: 0.08, metalness: 0, clearcoat: 1,
+    clearcoatRoughness: 0.05, transparent: true, opacity: 0.94, envMapIntensity: 1.6,
+  });
+  const leadMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(lead.x1 - lead.x0, lead.z1 - lead.z0),
+    leadMat);
+  leadMesh.rotation.x = -Math.PI / 2;
+  leadMesh.position.set((lead.x0 + lead.x1) / 2, 0.02, (lead.z0 + lead.z1) / 2);
+  scene.add(leadMesh);
+  // broken floe edges along the lead
+  for (let z = lead.z0; z < lead.z1; z += 9) {
+    for (const x of [lead.x0, lead.x1]) {
+      const floe = new THREE.Mesh(new THREE.DodecahedronGeometry(1.1 + Math.random(), 0), iceMat);
+      floe.position.set(x + (Math.random() - 0.5) * 2, groundHeight(x, z) + 0.15, z + Math.random() * 4);
+      floe.scale.y = 0.35;
+      floe.rotation.y = Math.random() * Math.PI;
+      scene.add(floe);
+    }
+  }
+  const inLead = (x, z) => x > lead.x0 && x < lead.x1 && z > lead.z0 && z < lead.z1;
+
+  // --- whale carcass (west of the lead, guarded by scavengers) ---
+  const whalePos = new THREE.Vector3(-86, 0, 55);
+  whalePos.y = groundHeight(whalePos.x, whalePos.z);
+  const whaleGroup = new THREE.Group();
+  const whaleMat = new THREE.MeshStandardMaterial({ color: 0x4a3b40, roughness: 0.85 });
+  const whaleBody = new THREE.Mesh(new THREE.CapsuleGeometry(2.6, 9, 8, 12), whaleMat);
+  whaleBody.rotation.z = Math.PI / 2;
+  whaleBody.position.y = 1.6;
+  whaleBody.scale.set(1, 0.72, 1);
+  whaleGroup.add(whaleBody);
+  const ribMat = new THREE.MeshStandardMaterial({ color: 0xd8cfc2, roughness: 0.6 });
+  for (let i = 0; i < 5; i++) {
+    const rib = new THREE.Mesh(new THREE.TorusGeometry(2.1, 0.12, 6, 14, Math.PI), ribMat);
+    rib.position.set(-1 + i * 1.6, 1.7, 0);
+    rib.rotation.y = Math.PI / 2;
+    whaleGroup.add(rib);
+  }
+  const stain = new THREE.Mesh(new THREE.CircleGeometry(6.5, 24),
+    new THREE.MeshBasicMaterial({ color: 0x5e2f34, transparent: true, opacity: 0.35, depthWrite: false }));
+  stain.rotation.x = -Math.PI / 2;
+  stain.position.y = 0.03;
+  whaleGroup.add(stain);
+  whaleGroup.position.copy(whalePos);
+  whaleGroup.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(whaleGroup);
+
+  // shelter: true when close behind a pressure ridge
+  const nearShelter = (x, z) => ridges.some((r) => Math.hypot(x - r.x, z - r.z) < r.r + 3.2);
+
   // --- den mouth (start point, south hills) ---
   const den = new THREE.Mesh(
     new THREE.SphereGeometry(3.4, 12, 8, 0, Math.PI),
@@ -351,5 +404,6 @@ export function createWorld(scene, renderer) {
     }
   }
 
-  return { groundHeight, thinIce, holePos, ridges, updateSnow, updateAmbient, addFootprint, emitBreath, sun, hemi, scene };
+  return { groundHeight, thinIce, holePos, ridges, updateSnow, updateAmbient, addFootprint, emitBreath,
+           inLead, lead, whalePos, nearShelter, dangers: [], sun, hemi, scene };
 }

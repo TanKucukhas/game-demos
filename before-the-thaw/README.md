@@ -44,7 +44,9 @@ Already-generated files are skipped, so the script is safe to re-run.
 | Space | pounce / pull a cub from the water |
 | Q | call cubs back |
 | E | tell cubs to stay / follow |
-| F | nurse cubs (costs your energy) / hold at carcass to feed |
+| F | nurse cubs (costs your energy) / hold at carcass or whale to feed |
+| R | rest — shelter behind a pressure ridge to sit out the storm |
+| G | play with the cubs — builds bond, improves obedience |
 
 ### The systems
 
@@ -59,6 +61,16 @@ Already-generated files are skipped, so the script is safe to re-run.
   knowledge, which also makes it obey commands more reliably. Cubs told to
   *stay* are safe from the hunt — and learn nothing.
 - **The storm** — 6 minutes. Fed cubs + rebuilt reserves = the family endures.
+- **The rival male** — a kill puts blood on the wind; ~40 s later a male twice
+  your size arrives. Stand your ground (Space, energy-based contest) or retreat.
+- **The whale carcass** — west across the open-water lead, guarded by two
+  scavenger males. Charge them, or stalk in downwind and steal from the far side.
+- **The lead** — open water with a south-running current. Cubs can swim ~11 s
+  before exhaustion; the current drags everyone off course.
+- **Rest & play** — shelter (R) pauses the drain and warms the cubs; play (G)
+  builds bond that permanently improves obedience this run.
+- **Survival Legacy** — if a cub survives, continue the bloodline: the next
+  winter's cubs inherit hunting instinct and trust from this run.
 
 ### The cubs
 

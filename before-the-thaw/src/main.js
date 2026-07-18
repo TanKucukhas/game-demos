@@ -13,6 +13,7 @@ import { createWorld } from './world.js';
 import { buildBear, buildSeal, animateGait, tryUpgradeModel } from './creatures.js';
 import { makeCubs } from './cubs.js';
 import { GameAudio } from './audio.js';
+import { NPCBear } from './rivals.js';
 
 // ---------- setup ----------
 const app = document.getElementById('app');
@@ -69,6 +70,13 @@ cubs.forEach(async (c) => {
   }
 })();
 
+// NPC bears: one rival male (kill-scent driven) + two whale-carcass scavengers
+const rival = new NPCBear(scene, world, { aggression: 0.55, name: 'rival male' });
+const scavengers = [
+  new NPCBear(scene, world, { aggression: 0.68, scale: 1.2, name: 'big scavenger' }),
+  new NPCBear(scene, world, { aggression: 0.45, scale: 1.05, name: 'lean scavenger' }),
+];
+
 // ---------- game state ----------
 const G = {
   running: false,
@@ -95,6 +103,15 @@ const G = {
   stormTotal: 360,       // 6 minutes
   stormLeft: 360,
   stormIntensity: 0,
+  // extended systems
+  rivalTimer: -1,        // countdown to rival arriving after a kill
+  rivalsDriven: 0,
+  whale: 1.0,            // whale carcass meat pool
+  whaleAte: 0,
+  resting: false,
+  bond: 0,               // grows through play; boosts obedience
+  playT: 0,
+  chapter: 0,
   // stats for the debrief
   kills: 0,
   cubRescues: 0,
@@ -112,6 +129,9 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyE') doStayFollow();
   if (e.code === 'Space') { e.preventDefault(); doPounce(); }
   if (e.code === 'KeyF') doNurse();
+  if (e.code === 'KeyR') doRest();
+  if (e.code === 'KeyG') doPlay();
+  if (['KeyW','KeyA','KeyS','KeyD'].includes(e.code)) stopResting();
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
 
@@ -119,7 +139,8 @@ addEventListener('keyup', (e) => { keys[e.code] = false; });
 const $ = (id) => document.getElementById(id);
 const hud = $('hud');
 
-function showMsg(text, dur = 4) {
+function showMsg(text, dur = 4, urgent = false) {
+  if (urgent) { G.msgQ.length = 0; G.msgT = 0; }
   G.msgQ.push({ text, dur });
 }
 function pumpMsg(dt) {
@@ -163,6 +184,32 @@ function doNurse() {
   for (const c of near) c.feed(0.12);
   audio.play('eat', { volume: 0.35 });
   showMsg('You nurse the cubs. Your own reserves burn away — milk is made of you.', 3.5);
+}
+
+function doRest() {
+  if (G.resting) { stopResting(); return; }
+  G.resting = true;
+  const sheltered = world.nearShelter(G.pos.x, G.pos.z);
+  showMsg(sheltered
+    ? 'You settle in the lee of the pressure ridge. The wind passes over you. The cubs press into your fur.'
+    : 'You lie down on the open ice to rest. Without a ridge to break the wind, the storm will still find you.', 4.5);
+  for (const c of cubs) if (c.alive && c.pos.distanceTo(G.pos) < 12) c.stateLabel = 'sleeping against you';
+}
+function stopResting() {
+  if (G.resting) G.resting = false;
+}
+function doPlay() {
+  if (G.playT > 0) return;
+  const near = cubs.filter((c) => c.alive && c.pos.distanceTo(G.pos) < 6 && !c.inWater);
+  if (!near.length) { showMsg('The cubs are not close enough to play.', 2.5); return; }
+  G.playT = 7;
+  G.bond = Math.min(0.3, G.bond + 0.1);
+  for (const c of near) {
+    c.playUntil = c.animT + 7;
+    c.obedience = Math.min(0.98, c.obedience + 0.07);
+  }
+  audio.play('cubCall', { volume: 0.5 });
+  showMsg('You drop your head and shove a cub into a snowdrift. For a few minutes, the Arctic is just a playground. (Their trust in you grows.)', 5);
 }
 
 // ---------- hunt ----------
@@ -215,6 +262,26 @@ function sealCanSmellBear() {
 
 function doPounce() {
   const distHole = G.pos.distanceTo(world.holePos);
+  // face off against a male bear
+  for (const npc of [rival, ...scavengers]) {
+    if (npc.state !== 'dormant' && npc.state !== 'flee' && npc.pos.distanceTo(G.pos) < 8) {
+      audio.play('pounce');
+      const won = npc.contest(G.energy);
+      G.energy = Math.max(0, G.energy - 0.04);
+      if (won) {
+        G.rivalsDriven++;
+        let watched = 0;
+        for (const c of cubs) if (c.alive && c.pos.distanceTo(G.pos) < 25) { watched++; c.obedience = Math.min(0.98, c.obedience + 0.05); }
+        showMsg(`You rise to your full height and ROAR. The ${npc.name} weighs the fight — and backs away.${watched ? ' Your cubs watched you stand your ground.' : ''}`, 5);
+      } else {
+        G.energy = Math.max(0, G.energy - 0.08);
+        const knock = G.pos.clone().sub(npc.pos).setY(0).normalize();
+        G.pos.addScaledVector(knock, 4);
+        showMsg(`The ${npc.name} does not move. He swats you aside — you are giving away two hundred pounds. Take the cubs and go.`, 5);
+      }
+      return;
+    }
+  }
   // rescue takes priority: pull a cub from the water
   for (const c of cubs) {
     if (c.inWater && c.pos.distanceTo(G.pos) < 5) {
@@ -242,7 +309,8 @@ function doPounce() {
       G.killPos = world.holePos.clone();
       seal.position.copy(world.holePos).add(new THREE.Vector3(2.5, 0.1, 0));
       seal.rotation.z = 0.4;
-      showMsg('THE KILL. Months of hunger end in three seconds of violence. The ice is red.', 5);
+      showMsg('THE KILL. Months of hunger end in three seconds of violence. The ice is red.', 5, true);
+      G.rivalTimer = 30 + Math.random() * 20; // blood on the wind travels
       // teaching moment — cubs that can see this learn
       let watched = 0;
       for (const c of cubs) if (c.alive && c.observeKill(c.pos.distanceTo(G.pos))) watched++;
@@ -295,8 +363,21 @@ function updatePrompt() {
   if (!text && G.sealState === 'dead' && G.carcass > 0 && G.pos.distanceTo(seal.position) < 3.5) {
     text = '<b>hold F</b> — feed';
   }
+  if (!text) {
+    for (const npc of [rival, ...scavengers]) {
+      if (npc.state === 'threat' && npc.pos.distanceTo(G.pos) < 9) {
+        text = `<b>SPACE</b> — stand your ground against the ${npc.name}`;
+      }
+    }
+  }
+  if (!text && G.pos.distanceTo(world.whalePos) < 5 && G.whale > 0) {
+    text = '<b>hold F</b> — feed on the whale';
+  }
   if (!text && cubs.some((c) => c.alive && c.pos.distanceTo(G.pos) < 4 && c.fed < 0.5) && G.sealState !== 'dead') {
     text = '<b>F</b> — nurse cubs (costs your energy)';
+  }
+  if (!text && G.stormIntensity > 0.15 && world.nearShelter(G.pos.x, G.pos.z) && !G.resting) {
+    text = '<b>R</b> — shelter behind the ridge';
   }
   el.innerHTML = text;
   el.classList.toggle('show', !!text);
@@ -304,6 +385,16 @@ function updatePrompt() {
 
 // ---------- mother movement ----------
 function updateMother(dt) {
+  if (G.resting) {
+    // resting: no movement, no drain (sheltered) or reduced drain (open)
+    const sheltered = world.nearShelter(G.pos.x, G.pos.z);
+    const drain = sheltered ? 0 : G.stormIntensity * 0.0009;
+    G.energy = Math.max(0, G.energy - drain * dt);
+    animateGait(mother, 0, G.t, false);
+    // sleeping cubs stop burning fat
+    for (const c of cubs) if (c.alive && c.pos.distanceTo(G.pos) < 6) c.fed = Math.min(1, c.fed + dt * 0.0004);
+    return;
+  }
   const fwd = new THREE.Vector3();
   if (keys['KeyW']) fwd.z += 1;
   if (keys['KeyS']) fwd.z -= 1;
@@ -329,6 +420,10 @@ function updateMother(dt) {
 
   // thin ice: mother is heavy → breaks through
   G.inWater = false;
+  if (world.inLead(G.pos.x, G.pos.z)) {
+    G.inWater = true;
+    G.pos.z += world.lead.current * dt; // the current drags the family south
+  }
   for (const p of world.thinIce) {
     const d = Math.hypot(G.pos.x - p.x, G.pos.z - p.z);
     if (d < p.r) {
@@ -337,7 +432,7 @@ function updateMother(dt) {
         p.mesh.material = p.mesh.material.clone();
         p.mesh.material.color.set(0x0d2536);
         audio.play('iceCrack');
-        showMsg('The ice SHATTERS under your weight. This crossing is gone — for everyone, for the rest of the season.', 4.5);
+        showMsg('The ice SHATTERS under your weight. This crossing is gone — for everyone, for the rest of the season.', 4.5, true);
       }
       G.inWater = true;
     }
@@ -445,6 +540,72 @@ function updateWeather(dt) {
   world.updateSnow(dt, G.pos, camera.position, G.wind, G.stormIntensity, G.t);
 }
 
+// ---------- NPC bears ----------
+let scavengersSpawned = false;
+function updateNPCs(dt) {
+  // rival male arrives downwind of the kill
+  if (G.rivalTimer > 0) {
+    G.rivalTimer -= dt;
+    if (G.rivalTimer <= 0 && G.sealState === 'dead' && G.carcass > 0.1) {
+      const dir = new THREE.Vector2(G.wind.x, G.wind.y).normalize();
+      rival.spawn(world.holePos.x + dir.x * 55, world.holePos.z + dir.y * 55, seal.position);
+      showMsg('Movement on the wind-side ridge. A male — twice your weight — has smelled the kill. Decide: defend the carcass, or take the cubs and go.', 6, true);
+      audio.play('motherCall', { volume: 0.4 });
+    }
+  }
+  rival.update(dt, mother.position, G.sealState === 'dead' ? seal.position : null,
+    (d) => { G.carcass = Math.max(0, G.carcass - d * 0.05); });
+
+  // scavengers guard the whale from the start
+  if (!scavengersSpawned && G.running) {
+    scavengersSpawned = true;
+    scavengers[0].spawn(world.whalePos.x + 4, world.whalePos.z + 2, world.whalePos);
+    scavengers[1].spawn(world.whalePos.x - 5, world.whalePos.z - 3, world.whalePos);
+  }
+  for (const sc of scavengers) {
+    sc.update(dt, mother.position, world.whalePos, (d) => { G.whale = Math.max(0, G.whale - d * 0.012); });
+  }
+  // publish danger positions for cub AI
+  world.dangers = [rival, ...scavengers].filter((n) => n.state !== 'dormant' && n.state !== 'flee').map((n) => n.pos);
+}
+
+// ---------- whale carcass ----------
+let whaleIntro = false;
+function updateWhale(dt) {
+  const d = G.pos.distanceTo(world.whalePos);
+  if (!whaleIntro && d < 45) {
+    whaleIntro = true;
+    showMsg('A dead whale, half-eaten, guarded by two males. A month of food — if you can reach it. Charge them, or circle downwind and steal from the far side.', 7, true);
+  }
+  if (d < 5 && G.whale > 0 && keys['KeyF']) {
+    const guards = scavengers.filter((sc) => sc.state !== 'dormant' && sc.state !== 'flee');
+    const alerted = guards.some((sc) => sc.pos.distanceTo(G.pos) < 12);
+    if (!alerted || guards.length === 0) {
+      const bite = dt * 0.06;
+      G.whale = Math.max(0, G.whale - bite);
+      G.whaleAte += bite;
+      G.energy = Math.min(1, G.energy + bite * 1.3);
+      audio.play('eat', { volume: 0.12 });
+      for (const c of cubs) {
+        if (c.alive && c.pos.distanceTo(world.whalePos) < 7) c.fed = Math.min(1, c.fed + bite * 1.5);
+      }
+    }
+  }
+}
+
+// ---------- chapters ----------
+function updateChapters() {
+  if (G.chapter === 0 && G.t > 2) { G.chapter = 1; showChapter('ACT I', 'The Den'); }
+  else if (G.chapter === 1 && G.pos.z > 15) { G.chapter = 2; showChapter('ACT II', 'The Sea Ice'); }
+  else if (G.chapter === 2 && G.stormLeft < 90) { G.chapter = 3; showChapter('ACT III', 'The Storm'); }
+}
+function showChapter(act, title) {
+  const el = $('chapter');
+  el.innerHTML = `<div class="act">${act}</div><div class="ctitle">${title}</div>`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3600);
+}
+
 // ---------- HUD ----------
 function updateHUD() {
   $('energyBar').style.width = `${G.energy * 100}%`;
@@ -481,7 +642,7 @@ function updateHUD() {
   $('storm').classList.toggle('urgent', G.stormLeft < 60);
 
   const st = $('stance');
-  st.textContent = G.inWater ? 'Swimming' : G.stalking ? 'Stalking' : 'Walking';
+  st.textContent = G.resting ? 'Resting' : G.inWater ? 'Swimming' : G.stalking ? 'Stalking' : 'Walking';
   st.classList.toggle('stalking', G.stalking);
 }
 
@@ -536,9 +697,33 @@ function endGame(won, body) {
   if (G.cubRescues) lessons.push(`Cubs pulled from the water: ${G.cubRescues}`);
   const broken = world.thinIce.filter((p) => p.broken).length;
   if (broken) lessons.push(`Ice crossings destroyed forever: ${broken}`);
+  if (G.rivalsDriven) lessons.push(`Male bears faced down: ${G.rivalsDriven}`);
+  if (G.whaleAte > 0.05) lessons.push(`Fed from the whale carcass`);
+  if (G.bond > 0) lessons.push(`Bond built through play: ${Math.round(G.bond * 333)}%`);
+  if (LEGACY.gen > 1) lessons.push(`Generation ${LEGACY.gen} of the bloodline`);
   $('endLessons').innerHTML = lessons.map((l) => `• ${l}`).join('<br/>');
   $('endScreen').classList.remove('hidden');
+  offerLegacy(won);
   audio.play(won ? 'narratorWin' : 'narratorLoss', { volume: 0.8 });
+}
+
+// ---------- generations (Survival Legacy) ----------
+const LEGACY = (() => { try { return JSON.parse(localStorage.getItem('btt_legacy')); } catch { return null; } })() || { gen: 1, hunting: 0, bond: 0 };
+
+function offerLegacy(won) {
+  const survivor = cubs.find((c) => c.alive);
+  const btn = $('legacyBtn');
+  if (!survivor) { btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  btn.textContent = `Continue the line — ${survivor.name}, Winter ${['I','II','III','IV','V','VI','VII'][LEGACY.gen] ?? LEGACY.gen + 1}`;
+  btn.onclick = () => {
+    localStorage.setItem('btt_legacy', JSON.stringify({
+      gen: LEGACY.gen + 1,
+      hunting: Math.max(...cubs.filter((c) => c.alive).map((c) => c.hunting)),
+      bond: G.bond,
+    }));
+    location.reload();
+  };
 }
 
 // ---------- opening beats ----------
@@ -555,7 +740,18 @@ function reset() {
   G.stormLeft = G.stormTotal; G.sealState = 'hauled'; G.sealAlert = 0;
   G.carcass = 0; G.kills = 0; G.cubRescues = 0; G.stalking = false;
   cubs[0].place(-2.5, -68); cubs[1].place(2.5, -68);
-  for (const c of cubs) { c.alive = true; c.mesh.visible = true; c.fed = 0.15; c.hunting = 0; c.state = 'follow'; }
+  for (const c of cubs) {
+    c.alive = true; c.mesh.visible = true; c.fed = 0.15; c.state = 'follow';
+    // inherited instinct: knowledge passes down the mother line
+    c.hunting = LEGACY.hunting * 0.4;
+    c.obedience = Math.min(0.95, c.obedience + LEGACY.bond * 0.5 + (LEGACY.gen - 1) * 0.03);
+    c.stamina = 1; c.playUntil = 0;
+  }
+  rival.despawn(); for (const sc of scavengers) sc.despawn();
+  scavengersSpawned = false; whaleIntro = false;
+  G.whale = 1; G.whaleAte = 0; G.rivalTimer = -1; G.rivalsDriven = 0;
+  G.bond = 0; G.playT = 0; G.chapter = 0; G.resting = false;
+  if (LEGACY.gen > 1) showMsg(`Winter ${['','','II','III','IV','V','VI'][LEGACY.gen] ?? LEGACY.gen} of this bloodline. The instincts of the mothers before you stir in the cubs.`, 6);
   for (const p of world.thinIce) { p.broken = false; }
   scene.fog.near = 70; scene.fog.far = 230;
   document.getElementById('vignette').style.opacity = 0;
@@ -587,6 +783,10 @@ function tick() {
     updateMother(dt);
     for (const c of cubs) c.update(dt, mother, cubs, G.stormIntensity);
     updateSeal(dt);
+    updateNPCs(dt);
+    updateWhale(dt);
+    updateChapters();
+    G.playT = Math.max(0, G.playT - dt);
     updateWeather(dt);
     world.updateAmbient(dt, G.t, G.sealState === 'hauled' || G.sealState === 'diving');
     scentHints(dt);
