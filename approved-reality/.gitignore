@@ -1,0 +1,7 @@
+# Sorceress video karelerinin acilmis hali — ara urun, mp4'lerden yeniden uretilir
+art/sorc/*/
+art/preview/z*.png
+art/preview/chk*.png
+art/preview/tek_kare.png
+art/preview/walk_kareler.png
+art/preview/kontakt.png

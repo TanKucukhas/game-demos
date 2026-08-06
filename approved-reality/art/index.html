@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>APPROVED REALITY — sanat galerisi</title>
+<style>
+  body{margin:0;padding:28px;background:#07080b;color:#aeb7c2;
+       font-family:monospace;font-size:13px;}
+  h1{color:#c2242e;letter-spacing:.3em;font-size:16px;margin:0 0 4px;}
+  h2{color:#d9b36a;font-size:13px;letter-spacing:.2em;margin:34px 0 10px;
+     border-bottom:1px solid #232936;padding-bottom:6px;}
+  p.n{color:#5c6472;margin:0 0 18px;line-height:1.6;}
+  .row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;}
+  .card{background:#0d0f14;border:1px solid #232936;border-radius:6px;
+        padding:10px;text-align:center;}
+  .card img{image-rendering:pixelated;display:block;margin:0 auto 8px;}
+  .lbl{color:#5c6472;font-size:11px;}
+  .pick{border-color:#7a9a6a;}
+  .pick .lbl{color:#7a9a6a;}
+</style>
+</head>
+<body>
+
+<h1>APPROVED REALITY</h1>
+<p class="n">AI ile üretilen sanat varlıkları. Hepsi PixelLab ile üretilip oyunun
+paletine indirildi.<br>
+Araçlar: <code>tools/gen_portre.py</code> (portre) ·
+<code>tools/gen_karakter.py</code> (karakter sprite)</p>
+
+<h2>DENEY: HER ŞEY PIXELLAB İLE</h2>
+<p class="n">Karakteri küçültmek yerine <b>dünyayı karakterin seviyesine çıkarma</b>
+denemesi. Sahne 192×108 üretildi — oyunun mevcut çözünürlüğü. Karakter üzerine
+konduğunda ölçek ve piksel yoğunluğu tutuyor.</p>
+<div class="row">
+  <div class="card"><img src="preview/sahne_oda_2_4x.png" width="420"><div class="lbl">AI sahne — Elias'ın odası</div></div>
+  <div class="card pick"><img src="preview/kompozit_a.png" width="420"><div class="lbl">karakter + sahne — uyum tutuyor</div></div>
+</div>
+
+<h2>KRİTİK SORU: IŞIK MOTORU YAŞAR MI?</h2>
+<p class="n">Bölüm 1'in bulmacası canlı ışığa dayanıyor (lambayı söndür, perdeyi
+kapat, devriye ışığını camla masaya yansıt). Sabit resim bunu yapamaz — ama
+mevcut ışık motoru AI resmin <b>üstünde</b> çalıştırılabilir. Kanıt:</p>
+<div class="row">
+  <div class="card"><img src="preview/isik_lamp_on.png" width="330"><div class="lbl">lamba AÇIK</div></div>
+  <div class="card"><img src="preview/isik_lamp_off.png" width="330"><div class="lbl">lamba KAPALI</div></div>
+  <div class="card"><img src="preview/isik_patrol.png" width="330"><div class="lbl">devriye ışığı geçerken</div></div>
+</div>
+<p class="n">Aynı arka plan, üç farklı ışık durumu. Mekanik korunuyor.</p>
+
+<h2>SORCERESS DENEMESİ</h2>
+<p class="n">AutoSprite V3 ile üretildi (karakterimiz referans görsel olarak verildi).
+Kaynak sanat PixelLab'den <b>belirgin şekilde daha iyi</b>. Ama iki sorun çıktı:
+video modeli "walk cycle" yönergesini uygulamadı (üç klip de neredeyse durağan),
+ve oturma klibi kendi masasını içeriyor.</p>
+<div class="row">
+  <div class="card"><img src="sorc/tek_kare.png" width="150"><div class="lbl">kaynak kare — 592×1504</div></div>
+  <div class="card"><img src="preview/chk2.png" width="150"><div class="lbl">oyun ölçeğinde (45px) — 17× küçültme</div></div>
+</div>
+
+<h2>ANİMASYONLAR</h2>
+<p class="n">İskelet pozları kodla kurgulanıp modele çizdirildi — kimlik ve ölçek
+sabit kalıyor, hareket garanti. Tüm kareler <b>ortak kırpma kutusu + ayak
+hizası</b> ile kesildiği için idle ↔ yürüme ↔ oturma geçişlerinde zıplama olmaz.</p>
+<div class="row">
+  <div class="card"><img src="preview/anim_idle.gif" width="152"><div class="lbl">idle — nefes</div></div>
+  <div class="card"><img src="preview/anim_walk.gif" width="152"><div class="lbl">walk — adım döngüsü</div></div>
+  <div class="card"><img src="preview/anim_sit.gif" width="152"><div class="lbl">sit — masada yazma</div></div>
+  <div class="card pick"><img src="preview/anim_walkE.gif" width="152"><div class="lbl">walkE — yan yürüyüş (sola giderken aynalanır)</div></div>
+</div>
+<div class="row" style="margin-top:14px">
+  <div class="card"><img src="preview/elias_anim_8x.png" width="1000"><div class="lbl">12 karelik sayfa — idle · walk · sit</div></div>
+</div>
+
+<h2>OYUN İÇİ KARAKTER — ADAYLAR</h2>
+<p class="n">5 aday, aynı komuttan farklı çekirdeklerle. 10× büyütülmüş.
+Hangisini istersiniz? (numarayı söylemeniz yeterli)</p>
+<div class="row">
+  <div class="card pick"><img src="preview/z0.png" width="160"><div class="lbl">0 — 16×45 (şu an seçili)</div></div>
+  <div class="card"><img src="preview/z1.png" width="170"><div class="lbl">1 — 17×47</div></div>
+  <div class="card"><img src="preview/z2.png" width="180"><div class="lbl">2 — 18×44</div></div>
+  <div class="card"><img src="preview/z3.png" width="220"><div class="lbl">3 — 22×44</div></div>
+  <div class="card"><img src="preview/z4.png" width="150"><div class="lbl">4 — 15×43</div></div>
+</div>
+
+<h2>GERÇEK BOYUT KARŞILAŞTIRMASI</h2>
+<p class="n">Oyunda görüneceği boyut (solda) ve şu anki elle çizilmiş karakter ölçüsü.</p>
+<div class="row">
+  <div class="card"><img src="preview/kar_stand_0.png" style="width:16px"><div class="lbl">1× — gerçek</div></div>
+  <div class="card"><img src="preview/kar_stand_0.png" style="width:48px"><div class="lbl">3× — ekranda böyle</div></div>
+</div>
+
+<h2>PORTRE — DOĞRULAMA EKRANI</h2>
+<div class="row">
+  <div class="card"><img src="preview/elias_8x.png" width="230"><div class="lbl">elias.png — 36×40</div></div>
+  <div class="card"><img src="preview/mara_8x.png" width="180"><div class="lbl">mara.png — 24×28</div></div>
+</div>
+
+<h2>HAM ÜRETİMLER (palet öncesi)</h2>
+<div class="row">
+  <div class="card"><img src="preview/elias_kaynak.png" width="200"><div class="lbl">elias ham</div></div>
+  <div class="card"><img src="preview/mara_kaynak.png" width="160"><div class="lbl">mara ham</div></div>
+</div>
+
+</body>
+</html>

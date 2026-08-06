@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APPROVED REALITY</title>
+<style>
+  body{margin:0;min-height:100vh;background:#07080b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-family:monospace;color:#8a92a0;}
+  .scene{position:relative;width:min(94vw,960px);border-radius:10px;overflow:hidden;background:#0a0b0e;}
+  canvas{display:block;width:100%;image-rendering:pixelated;}
+  #tv{position:absolute;inset:0;pointer-events:none;}
+  .scanlines{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 1px,transparent 1px 3px);}
+  .vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 58%,rgba(0,0,0,.35) 100%);}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  button{font-family:monospace;font-size:13px;background:#12151c;color:#aeb7c2;border:1px solid #2a2f3a;border-radius:6px;padding:6px 10px;cursor:pointer;}
+  button:hover{background:#1a1e27;}
+  button.on{background:#232a38;color:#e8edf2;border-color:#4a5568;}
+  .cap{font-size:12px;color:#5c6472;letter-spacing:.04em;text-align:center;max-width:min(94vw,960px);margin:0;}
+  .opts{position:absolute;inset:0;z-index:5;background:rgba(3,4,7,.84);display:flex;align-items:center;justify-content:center;}
+  .opts.hidden{display:none;}
+  .opts .panel{background:#0c0f16;border:1px solid #2a2f3a;border-radius:8px;padding:20px 26px;display:flex;flex-direction:column;gap:12px;align-items:center;}
+  .opts .ot{color:#c2242e;letter-spacing:.25em;font-weight:bold;font-size:14px;}
+  .opts .dim{color:#3f4854;}
+  .hint{font-size:11px;color:#3f4854;letter-spacing:.06em;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <canvas id="cv" width="192" height="108"></canvas>
+  <canvas id="tv" width="576" height="324"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+  <div id="opts" class="opts hidden">
+    <div class="panel">
+      <div class="ot">OPTIONS</div>
+      <div class="bar">
+        <button id="ms" class="on">&#9834; SFX</button>
+        <button id="mm" class="on">&#9835; MUSIC</button>
+        <button id="mn">&#9776; NOTEBOOK</button>
+        <button id="md">&#8986; WRIST UNIT</button>
+      </div>
+      <p class="cap">left click: walk / interact &middot; hover: identify</p>
+      <p class="cap">TAB: notebook &middot; R: wrist unit &middot; arrows + enter: select</p>
+      <p class="cap dim">ESC to close</p>
+    </div>
+  </div>
+</div>
+<p class="hint">ESC: options</p>
+
+<script src="js/core.js"></script>
+<script src="js/ch1.js"></script>
+<script src="js/ch2.js"></script>
+<script src="js/ch3.js"></script>
+<script src="js/ch46.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
