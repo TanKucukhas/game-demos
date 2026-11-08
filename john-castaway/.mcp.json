@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "ada-sprites": {
-      "command": "node",
-      "args": ["tools/sprite-mcp/server.mjs"]
-    }
-  }
-}
